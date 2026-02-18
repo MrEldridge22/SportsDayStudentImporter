@@ -34,7 +34,7 @@ students_df = students_df.drop(columns=['Name',
 students_df = students_df.rename(columns={
                                         'FirstName': 'First Name',
                                         'LastName': 'Last Name',
-                                        'Code': 'StudentID',
+                                        'Code': 'Student ID',
                                         'YearLevel': 'Year',
                                         'HomeGroup': 'Group'})
 
@@ -60,9 +60,9 @@ students_df['__base'] = students_df['Year'].map(base_map)
 # Sequence within each Year following the sorted order
 students_df['__seq'] = students_df.groupby('Year').cumcount() + 1  # 1,2,3,...
 
-# Compute ParticipantID
+# Compute Competitor Number
 # For Year 11, first should be 1500 (i.e., don't add the +1 effect): subtract 1 for Year 11 only
-students_df['ParticipantID'] = (
+students_df['Competitor Number'] = (
     students_df['__base'] + students_df['__seq'] - (students_df['Year'] == 11).astype(int)
 ).astype('Int64')
 
@@ -77,7 +77,7 @@ students_df.to_csv('data_with_ids.csv', index=False)
 # PDF Output
 
 # Assuming `data` is your sorted DataFrame with columns:
-# ['Year', 'Group', 'Surname', 'FirstName', 'ParticipantID']
+# ['Year', 'Group', 'Surname', 'FirstName', 'Competitor Number']
 
 output_pdf = "Group_Rosters.pdf"
 
@@ -119,9 +119,9 @@ for group_name, df_g in students_df.groupby('Group', sort=True):
     elements.append(Spacer(1, 6))
 
     # Build table data
-    table_data = [["ParticipantID", "First Name", "Last Name", "Year"]]
-    for _, row in df_g[['ParticipantID', 'First Name', 'Last Name', 'Year']].iterrows():
-        table_data.append([str(row['ParticipantID']), str(row['First Name']), str(row['Last Name']), str(row['Year'])])
+    table_data = [["Competitor Number", "First Name", "Last Name", "Year"]]
+    for _, row in df_g[['Competitor Number', 'First Name', 'Last Name', 'Year']].iterrows():
+        table_data.append([str(row['Competitor Number']), str(row['First Name']), str(row['Last Name']), str(row['Year'])])
 
     # Create table with styling
     tbl = Table(table_data, colWidths=[30*mm, 50*mm, 50*mm, 15*mm])
