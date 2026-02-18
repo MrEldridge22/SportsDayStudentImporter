@@ -70,7 +70,7 @@ students_df['Competitor Number'] = (
 students_df = students_df.drop(columns=['__base', '__seq'])
 
 # Save back out for import into Scoring System.
-students_df.to_csv('data_with_ids.csv', index=False)
+students_df.to_csv('Participant ID Upload.csv', index=False)
 # print(students_df)
 
 
