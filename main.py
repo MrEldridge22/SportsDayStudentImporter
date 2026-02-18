@@ -79,7 +79,7 @@ students_df.to_csv('Participant ID Upload.csv', index=False)
 # Assuming `data` is your sorted DataFrame with columns:
 # ['Year', 'Group', 'Surname', 'FirstName', 'Competitor Number']
 
-output_pdf = "Group_Rosters.pdf"
+output_pdf = "Care Class Lists.pdf"
 
 styles = getSampleStyleSheet()
 
