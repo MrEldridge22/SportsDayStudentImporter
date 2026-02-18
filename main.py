@@ -1,6 +1,15 @@
 import pandas as pd
 import json
 
+
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+
 # Change this for each year as needed
 year = 2026
 
@@ -63,3 +72,82 @@ students_df = students_df.drop(columns=['__base', '__seq'])
 # Save back out for import into Scoring System.
 students_df.to_csv('data_with_ids.csv', index=False)
 # print(students_df)
+
+
+# PDF Output
+
+# Assuming `data` is your sorted DataFrame with columns:
+# ['Year', 'Group', 'Surname', 'FirstName', 'ParticipantID']
+
+output_pdf = "Group_Rosters.pdf"
+
+styles = getSampleStyleSheet()
+
+group_title_style = ParagraphStyle(
+    name="GroupTitle",
+    parent=styles["Title"],
+    fontName="Helvetica-Bold",
+    fontSize=22,        # Adjust size to taste (e.g., 22–26)
+    leading=26,
+    alignment=1,        # 0=left, 1=center, 2=right
+    spaceAfter=6
+)
+
+# Optional: a subtle subtitle style (remove if you don’t want a subtitle line)
+subtitle_style = ParagraphStyle(
+    name="Subtitle",
+    parent=styles["Normal"],
+    fontSize=14,
+    textColor=colors.grey,
+    alignment=1,
+    spaceAfter=6
+)
+
+
+body_style = styles['BodyText']
+body_style.fontSize = 10
+
+elements = []
+
+# Iterate groups and add a page per group
+for group_name, df_g in students_df.groupby('Group', sort=True):
+    # --- Title (group name only, big and centered) ---
+    elements.append(Paragraph(str(group_name), group_title_style))
+    elements.append(Spacer(1, 6))  # a little breathing room
+
+    elements.append(Paragraph(f"{year} Sports Day Participant IDs", subtitle_style))
+    elements.append(Spacer(1, 6))
+
+    # Build table data
+    table_data = [["ParticipantID", "First Name", "Last Name", "Year"]]
+    for _, row in df_g[['ParticipantID', 'First Name', 'Last Name', 'Year']].iterrows():
+        table_data.append([str(row['ParticipantID']), str(row['First Name']), str(row['Last Name']), str(row['Year'])])
+
+    # Create table with styling
+    tbl = Table(table_data, colWidths=[30*mm, 50*mm, 50*mm, 15*mm])
+    tbl.setStyle(TableStyle([
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 10),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('FONTSIZE', (0,1), (-1,-1), 9),
+        ('GRID', (0,0), (-1,-1), 0.25, colors.grey),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.whitesmoke, colors.white]),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ]))
+
+    elements.append(tbl)
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph(f"Total students: {len(df_g)}", subtitle_style))
+    elements.append(PageBreak())
+
+# Build the PDF
+doc = SimpleDocTemplate(
+    output_pdf,
+    pagesize=A4,
+    rightMargin=18*mm, leftMargin=18*mm,
+    topMargin=18*mm, bottomMargin=18*mm
+)
+doc.build(elements)
