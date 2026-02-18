@@ -1,7 +1,5 @@
 import pandas as pd
 import json
-
-
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import mm
@@ -9,15 +7,19 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+# PDF Output Name
+output_pdf = "Care Class Lists.pdf"
 
-# Change this for each year as needed
+# Change this for each year as needed, this helps link the correct timetabling file and also appears in the PDF subtitle
 year = 2026
 
 # Read in Student students_df from Timetabling Solutions V10 Development File
 tfx_file = f"TTD_{year}_S1.tfx"
+
 with open(tfx_file) as f:
     tfx_data = json.load(f)
 
+# Get the students list and convert to DataFrame
 students_df = pd.DataFrame(tfx_data['Students'])
 
 # Drop Unnecessary Columns
@@ -41,7 +43,9 @@ students_df = students_df.rename(columns={
 # Remove leading zeros from Year, convert to int
 students_df['Year'] = students_df['Year'].astype(str).str.lstrip('0').astype(int)
 
-students_df = students_df.sort_values(by=['Year', 'Group', 'First Name']).reset_index(drop=True)
+# Sort students by year, then care group, then last name (for consistent competitor numbering), and reset index
+students_df = students_df.sort_values(by=['Year', 'Group', 'Last Name']).reset_index(drop=True)
+# Swap M and F to full words for easier readability in the PDF, and system import
 students_df['Gender'] = students_df['Gender'].map({'M': 'Male', 'F': 'Female'})
 
 # Base number per Year
@@ -71,18 +75,12 @@ students_df = students_df.drop(columns=['__base', '__seq'])
 
 # Save back out for import into Scoring System.
 students_df.to_csv('Participant ID Upload.csv', index=False)
-# print(students_df)
 
 
-# PDF Output
-
-# Assuming `data` is your sorted DataFrame with columns:
-# ['Year', 'Group', 'Surname', 'FirstName', 'Competitor Number']
-
-output_pdf = "Care Class Lists.pdf"
-
+### PDF Output ###
 styles = getSampleStyleSheet()
 
+# Custom style for group titles (big, bold, centered)
 group_title_style = ParagraphStyle(
     name="GroupTitle",
     parent=styles["Title"],
@@ -103,12 +101,10 @@ subtitle_style = ParagraphStyle(
     spaceAfter=6
 )
 
-
 body_style = styles['BodyText']
 body_style.fontSize = 10
 
 elements = []
-
 # Iterate groups and add a page per group
 for group_name, df_g in students_df.groupby('Group', sort=True):
     # --- Title (group name only, big and centered) ---
